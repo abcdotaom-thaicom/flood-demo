@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flood Viewer</title>
+  <style>
+    :root {
+      --bg-color: #f9fafb;
+      --card-bg: #ffffff;
+      --text-primary: #111827;
+      --text-secondary: #6b7280;
+      --accent-color: #000000;
+      --border-color: #e5e7eb;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --radius: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+      background-color: var(--bg-color);
+      color: var(--text-primary);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+      line-height: 1.5;
+    }
+
+    .container {
+      background-color: var(--card-bg);
+      padding: 40px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-md);
+      width: 100%;
+      max-width: 600px;
+      text-align: center;
+    }
+
+    h2 {
+      font-weight: 600;
+      font-size: 24px;
+      margin-bottom: 8px;
+      letter-spacing: -0.025em;
+    }
+
+    p.subtitle {
+      color: var(--text-secondary);
+      font-size: 14px;
+      margin-bottom: 32px;
+    }
+
+    .search-box {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      padding: 10px 14px;
+      font-size: 16px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input[type="text"]:focus {
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.05);
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      font-weight: 500;
+      color: #fff;
+      background-color: var(--accent-color);
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    #msg {
+      margin-top: 16px;
+      color: #ef4444;
+      font-size: 14px;
+      display: none;
+      background-color: #fef2f2;
+      padding: 10px;
+      border-radius: var(--radius);
+      border: 1px solid #fee2e2;
+    }
+
+    .image-container {
+      margin-top: 32px;
+      border-radius: var(--radius);
+      overflow: hidden;
+      display: none;
+      /* Hidden by default */
+    }
+
+    #preview {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: var(--radius);
+      border: 1px solid var(--border-color);
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+    <h2>Flood Viewer</h2>
+    <p class="subtitle">Enter an Activity ID to view the analysis result.</p>
+
+    <div class="search-box">
+      <input id="activityInput" type="text" placeholder="e.g., 240711577" autofocus>
+      <button id="searchBtn">Search</button>
+    </div>
+
+    <div id="msg">No image found for this Activity ID</div>
+
+    <div class="image-container" id="imgContainer">
+      <img id="preview" alt="Flood analysis image">
+    </div>
+  </div>
+
+  <script>
+    function loadFloodImage() {
+      const id = document.getElementById('activityInput').value.trim();
+      const img = document.getElementById('preview');
+      const msg = document.getElementById('msg');
+      const imgContainer = document.getElementById('imgContainer');
+
+      if (!id) return;
+
+      // Path configuration
+      const url = 'output_png/flood_analysis_' + id + '.png';
+
+      // Reset state
+      imgContainer.style.display = 'none';
+      msg.style.display = 'none';
+
+      const testImg = new Image();
+      testImg.onload = function () {
+        img.src = url;
+        imgContainer.style.display = 'block';
+      };
+      testImg.onerror = function () {
+        msg.style.display = 'block';
+      };
+      testImg.src = url;
+    }
+
+    document.getElementById('searchBtn').addEventListener('click', loadFloodImage);
+
+    // Enter key support
+    document.getElementById('activityInput').addEventListener('keyup', function (e) {
+      if (e.key === 'Enter') loadFloodImage();
+    });
+  </script>
+
+</body>
+
+</html>
