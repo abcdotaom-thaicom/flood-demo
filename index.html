@@ -3,19 +3,28 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Flood Viewer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Flood Viewer - Overview</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sarabun:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+
   <style>
     :root {
-      --bg-color: #f9fafb;
-      --card-bg: #ffffff;
+      --primary-color: #2563eb;
       --text-primary: #111827;
       --text-secondary: #6b7280;
-      --accent-color: #000000;
-      --border-color: #e5e7eb;
-      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-      --radius: 8px;
+      --bg-white: #ffffff;
+      --radius: 12px;
+      --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     }
 
     * {
@@ -25,157 +34,169 @@
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-      background-color: var(--bg-color);
-      color: var(--text-primary);
+      font-family: 'Sarabun', 'Inter', sans-serif;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      position: relative;
+    }
+
+    /* Background Map */
+    #bgMap {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+    }
+
+    /* Floating Search Card */
+    .overlay-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
-      padding: 20px;
-      line-height: 1.5;
+      z-index: 1000;
+      pointer-events: none;
+      /* Allow clicking map behind */
     }
 
-    .container {
-      background-color: var(--card-bg);
-      padding: 40px;
+    .search-card {
+      background-color: var(--bg-white);
+      padding: 32px;
       border-radius: var(--radius);
-      box-shadow: var(--shadow-md);
-      width: 100%;
-      max-width: 600px;
+      box-shadow: var(--shadow);
+      width: 90%;
+      max-width: 420px;
       text-align: center;
+      pointer-events: auto;
+      /* Re-enable clicks for card */
     }
 
-    h2 {
-      font-weight: 600;
+    h1 {
       font-size: 24px;
-      margin-bottom: 8px;
-      letter-spacing: -0.025em;
-    }
-
-    p.subtitle {
-      color: var(--text-secondary);
-      font-size: 14px;
-      margin-bottom: 32px;
-    }
-
-    .search-box {
-      display: flex;
-      gap: 10px;
+      font-weight: 700;
+      color: var(--text-primary);
       margin-bottom: 24px;
     }
 
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
     input[type="text"] {
-      flex: 1;
-      padding: 10px 14px;
+      padding: 12px 16px;
       font-size: 16px;
-      border: 1px solid var(--border-color);
+      border: 2px solid #e5e7eb;
       border-radius: var(--radius);
       outline: none;
-      transition: border-color 0.2s, box-shadow 0.2s;
+      transition: border-color 0.2s;
+      width: 100%;
+      text-align: center;
     }
 
     input[type="text"]:focus {
-      border-color: var(--accent-color);
-      box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.05);
+      border-color: var(--primary-color);
     }
 
     button {
-      padding: 10px 20px;
+      padding: 12px;
       font-size: 16px;
-      font-weight: 500;
-      color: #fff;
-      background-color: var(--accent-color);
+      font-weight: 600;
+      color: white;
+      background-color: var(--primary-color);
       border: none;
       border-radius: var(--radius);
       cursor: pointer;
-      transition: opacity 0.2s;
+      transition: background-color 0.2s;
+      width: 100%;
     }
 
     button:hover {
-      opacity: 0.9;
-    }
-
-    #msg {
-      margin-top: 16px;
-      color: #ef4444;
-      font-size: 14px;
-      display: none;
-      background-color: #fef2f2;
-      padding: 10px;
-      border-radius: var(--radius);
-      border: 1px solid #fee2e2;
-    }
-
-    .image-container {
-      margin-top: 32px;
-      border-radius: var(--radius);
-      overflow: hidden;
-      display: none;
-      /* Hidden by default */
-    }
-
-    #preview {
-      width: 100%;
-      height: auto;
-      display: block;
-      border-radius: var(--radius);
-      border: 1px solid var(--border-color);
+      background-color: #1d4ed8;
     }
   </style>
 </head>
 
 <body>
 
-  <div class="container">
-    <h2>Flood Viewer</h2>
-    <p class="subtitle">Enter an Activity ID to view the analysis result.</p>
+  <div id="bgMap"></div>
 
-    <div class="search-box">
-      <input id="activityInput" type="text" placeholder="e.g., 240711577" autofocus>
-      <button id="searchBtn">Search</button>
-    </div>
-
-    <div id="msg">No image found for this Activity ID</div>
-
-    <div class="image-container" id="imgContainer">
-      <img id="preview" alt="Flood analysis image">
+  <div class="overlay-container">
+    <div class="search-card">
+      <h1>Flood Viewer</h1>
+      <div class="input-group">
+        <input type="text" id="activityId" placeholder="Enter Activity ID" autofocus>
+        <button id="searchBtn">Search</button>
+      </div>
     </div>
   </div>
 
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
   <script>
-    function loadFloodImage() {
-      const id = document.getElementById('activityInput').value.trim();
-      const img = document.getElementById('preview');
-      const msg = document.getElementById('msg');
-      const imgContainer = document.getElementById('imgContainer');
+    // Initialize Map (Centered on Sisaket, Thailand)
+    const map = L.map('bgMap', {
+      zoomControl: false, // Clean look
+      attributionControl: false
+    }).setView([15.1186, 104.3220], 10);
 
-      if (!id) return;
+    // Satellite Tiles
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      attribution: 'Tiles &copy; Esri'
+    }).addTo(map);
 
-      // Path configuration
-      const url = 'output_png/flood_analysis_' + id + '.png';
+    // Fetch Data & Plot Markers
+    fetch('output_png1/flood_analysis_data.json')
+      .then(response => response.json())
+      .then(data => {
+        const bounds = L.latLngBounds();
 
-      // Reset state
-      imgContainer.style.display = 'none';
-      msg.style.display = 'none';
+        data.features.forEach(feature => {
+          const [lon, lat] = feature.geometry.coordinates;
+          const id = feature.properties.activity_id;
 
-      const testImg = new Image();
-      testImg.onload = function () {
-        img.src = url;
-        imgContainer.style.display = 'block';
-      };
-      testImg.onerror = function () {
-        msg.style.display = 'block';
-      };
-      testImg.src = url;
+          // Create Marker
+          const marker = L.marker([lat, lon]).addTo(map);
+          bounds.extend([lat, lon]);
+
+          // Click Event: Redirect to map.html
+          marker.on('click', () => {
+            window.location.href = `map.html?id=${id}`;
+          });
+        });
+
+        // Fit bounds if data exists
+        if (data.features.length > 0) {
+          map.fitBounds(bounds, { padding: [50, 50] });
+        }
+      })
+      .catch(err => console.error('Error loading data:', err));
+
+    // Search Logic
+    const input = document.getElementById('activityId');
+    const btn = document.getElementById('searchBtn');
+
+    function doSearch() {
+      const id = input.value.trim();
+      if (id) {
+        window.location.href = `map.html?id=${id}`;
+      }
     }
 
-    document.getElementById('searchBtn').addEventListener('click', loadFloodImage);
+    btn.addEventListener('click', doSearch);
 
-    // Enter key support
-    document.getElementById('activityInput').addEventListener('keyup', function (e) {
-      if (e.key === 'Enter') loadFloodImage();
+    input.addEventListener('keyup', (e) => {
+      if (e.key === 'Enter') doSearch();
     });
   </script>
 

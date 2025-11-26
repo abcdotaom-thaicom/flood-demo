@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Flood Inspection Map</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sarabun:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --text-primary: #111827;
+            --text-secondary: #6b7280;
+            --bg-white: #ffffff;
+            --border-color: #e5e7eb;
+            --success-color: #059669;
+            --success-bg: #d1fae5;
+            --danger-color: #dc2626;
+            --danger-bg: #fee2e2;
+            --radius-lg: 16px;
+            --radius-md: 8px;
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Sarabun', 'Inter', sans-serif;
+            overflow: hidden;
+            /* Prevent body scroll, map handles it */
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* Map Container */
+        #map {
+            height: 100%;
+            width: 100%;
+            z-index: 1;
+        }
+
+        /* Bottom Sheet */
+        .bottom-sheet {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: var(--bg-white);
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+            box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .bottom-sheet.active {
+            transform: translateY(0);
+        }
+
+        .sheet-header {
+            padding: 12px;
+            display: flex;
+            justify-content: center;
+            cursor: grab;
+            flex-shrink: 0;
+        }
+
+        .drag-handle {
+            width: 40px;
+            height: 5px;
+            background-color: #d1d5db;
+            border-radius: 100px;
+        }
+
+        .sheet-content {
+            padding: 0 20px 20px 20px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Typography & Layout */
+        .feature-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .activity-id {
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 100px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-success {
+            background-color: var(--success-bg);
+            color: var(--success-color);
+        }
+
+        .status-danger {
+            background-color: var(--danger-bg);
+            color: var(--danger-color);
+        }
+
+        .model-result {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 2px;
+        }
+
+        .info-value {
+            font-size: 14px;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        /* Image */
+        .image-preview {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-radius: var(--radius-md);
+            margin-bottom: 16px;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+            background-color: #f3f4f6;
+        }
+
+        /* Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: 14px;
+            text-align: center;
+            text-decoration: none;
+            transition: opacity 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-secondary {
+            background-color: #f3f4f6;
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-content {
+            max-width: 100%;
+            max-height: 90vh;
+            border-radius: var(--radius-md);
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: white;
+            font-size: 30px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* Back Button */
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 100px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <a href="index.html" class="back-btn">
+        ← Back
+    </a>
+
+    <div id="map"></div>
+
+    <div class="bottom-sheet" id="bottomSheet">
+        <div class="sheet-header" id="sheetHeader">
+            <div class="drag-handle"></div>
+        </div>
+        <div class="sheet-content" id="sheetContent">
+            <!-- Content injected via JS -->
+        </div>
+    </div>
+
+    <div class="modal" id="imageModal">
+        <span class="close-modal" id="closeModal">&times;</span>
+        <img class="modal-content" id="fullImage">
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <script>
+        // Initialize Map
+        const map = L.map('map').setView([15.242956, 104.278157], 13);
+
+        // Satellite Tiles (Esri World Imagery)
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+        }).addTo(map);
+
+        // Optional: Add Labels on top (Stamen Toner Lite Labels or similar if available, otherwise stick to Satellite only for now to ensure stability)
+        // For better UX, let's add OpenStreetMap standard tiles as an overlay or just use Hybrid if we can find a stable free provider.
+        // Sticking to Esri Satellite for "Hybrid" feel as requested (often implies satellite view).
+
+        // Elements
+        const bottomSheet = document.getElementById('bottomSheet');
+        const sheetContent = document.getElementById('sheetContent');
+        const imageModal = document.getElementById('imageModal');
+        const fullImage = document.getElementById('fullImage');
+        const closeModal = document.getElementById('closeModal');
+
+        // Parse URL Params
+        const urlParams = new URLSearchParams(window.location.search);
+        const targetId = urlParams.get('id');
+
+        // Fetch Data
+        fetch('output_png1/flood_analysis_data.json')
+            .then(response => response.json())
+            .then(data => {
+                renderMarkers(data);
+            })
+            .catch(err => console.error('Error loading data:', err));
+
+        function renderMarkers(data) {
+            const bounds = L.latLngBounds();
+            let targetFeature = null;
+
+            data.features.forEach(feature => {
+                const [lon, lat] = feature.geometry.coordinates;
+                const props = feature.properties;
+
+                // Check if this is the target ID
+                if (targetId && String(props.activity_id) === String(targetId)) {
+                    targetFeature = { props, lat, lon };
+                }
+
+                // Create Marker
+                const marker = L.marker([lat, lon]).addTo(map);
+                bounds.extend([lat, lon]);
+
+                // Click Event
+                marker.on('click', () => {
+                    showBottomSheet(props, lat, lon);
+                    map.flyTo([lat, lon], 18, {
+                        animate: true,
+                        duration: 1
+                    });
+                });
+            });
+
+            // Auto-focus logic
+            if (targetFeature) {
+                // If ID found, focus on it and open sheet
+                map.setView([targetFeature.lat, targetFeature.lon], 18);
+                showBottomSheet(targetFeature.props, targetFeature.lat, targetFeature.lon);
+            } else {
+                // If no ID or not found, show all
+                if (data.features.length > 0) {
+                    map.fitBounds(bounds, { padding: [50, 50] });
+                }
+            }
+        }
+
+        function showBottomSheet(props, lat, lon) {
+            const isConfirmed = props.confirm_status.includes('ที่เข้าเงื่อนไข');
+            const statusClass = isConfirmed ? 'status-success' : 'status-danger';
+            const imagePath = `output_png1/${props.image_filename}`;
+
+            const html = `
+        <div class="feature-header">
+          <span class="activity-id">ID: ${props.activity_id}</span>
+          <span class="status-badge ${statusClass}">${props.confirm_status}</span>
+        </div>
+        
+        <h3 class="model-result">${props.model_result_text}</h3>
+        
+        <div class="info-grid">
+          <div class="info-item full-width">
+            <span class="info-label">ที่อยู่</span>
+            <span class="info-value">${props.address}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">พันธุ์ข้าว</span>
+            <span class="info-value">${props.rice_variety}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">วันที่ปลูก</span>
+            <span class="info-value">${props.dates.plant_str}</span>
+          </div>
+          <div class="info-item">
+             <span class="info-label">วันที่เก็บเกี่ยว</span>
+            <span class="info-value">${props.dates.harvest_str}</span>
+          </div>
+        </div>
+
+        <img src="${imagePath}" class="image-preview" onclick="openModal('${imagePath}')" alt="Flood Analysis">
+
+        <div class="action-buttons">
+          <a href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}" target="_blank" class="btn btn-primary">
+            🚗 นำทางทันที
+          </a>
+          <a href="https://www.google.com/maps/search/?api=1&query=${lat},${lon}" target="_blank" class="btn btn-secondary">
+            📍 ปักหมุด
+          </a>
+        </div>
+      `;
+
+            sheetContent.innerHTML = html;
+            bottomSheet.classList.add('active');
+        }
+
+        // Modal Logic
+        window.openModal = function (src) {
+            fullImage.src = src;
+            imageModal.style.display = 'flex';
+        }
+
+        closeModal.onclick = function () {
+            imageModal.style.display = 'none';
+        }
+
+        imageModal.onclick = function (e) {
+            if (e.target === imageModal) {
+                imageModal.style.display = 'none';
+            }
+        }
+
+        // Close bottom sheet when clicking map
+        map.on('click', () => {
+            bottomSheet.classList.remove('active');
+        });
+
+    </script>
+</body>
+
+</html>
