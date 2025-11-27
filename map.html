@@ -306,9 +306,11 @@
         // Initialize Map
         const map = L.map('map').setView([15.242956, 104.278157], 13);
 
-        // Satellite Tiles (Esri World Imagery)
-        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+        // Google Hybrid Tiles
+        L.tileLayer('http://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+            maxZoom: 20,
+            subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+            attribution: '&copy; Google Maps'
         }).addTo(map);
 
         // Optional: Add Labels on top (Stamen Toner Lite Labels or similar if available, otherwise stick to Satellite only for now to ensure stability)
