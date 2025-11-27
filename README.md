@@ -38,8 +38,8 @@ This is a static web application. You don't need a backend server to run it loca
 
 1.  **Clone the repository**:
     ```bash
-    git clone https://github.com/attawutnp/website-demo.git
-    cd website-demo
+    git clone https://github.com/abcdotaom-thaicom/flood-demo.git
+    cd flood-demo
     ```
 
 2.  **Run the application**:
