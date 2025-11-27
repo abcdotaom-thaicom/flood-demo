@@ -173,7 +173,7 @@
     }).addTo(map);
 
     // Fetch Data & Plot Markers
-    fetch('output_png1/flood_analysis_data.json')
+    fetch('output_png_all/flood_analysis_data.json')
       .then(response => response.json())
       .then(data => {
         const bounds = L.latLngBounds();

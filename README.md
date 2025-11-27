@@ -25,7 +25,7 @@ A web-based application for visualizing and inspecting flood analysis data. This
 
 - `index.html`: The landing page containing the search interface and a background map overview.
 - `map.html`: The main map application where users can interact with inspection points.
-- `output_png1/`: Directory containing the data file (`flood_analysis_data.json`) and associated images.
+- `output_png_all/`: Directory containing the data file (`flood_analysis_data.json`) and associated images.
 - `preview_...html`: An external HTML preview file linked from the main page.
 
 ## Getting Started

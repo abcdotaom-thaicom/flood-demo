@@ -329,7 +329,7 @@
         const targetId = urlParams.get('id');
 
         // Fetch Data
-        fetch('output_png1/flood_analysis_data.json')
+        fetch('output_png_all/flood_analysis_data.json')
             .then(response => response.json())
             .then(data => {
                 renderMarkers(data);
@@ -379,7 +379,7 @@
         function showBottomSheet(props, lat, lon) {
             const isConfirmed = props.confirm_status.includes('ที่เข้าเงื่อนไข');
             const statusClass = isConfirmed ? 'status-success' : 'status-danger';
-            const imagePath = `output_png1/${props.image_filename}`;
+            const imagePath = `output_png_all/${props.image_filename}`;
 
             const html = `
         <div class="feature-header">
